@@ -1,0 +1,10 @@
+outputs/cam2.avi
+outputs/webcam.avi
+checkpoints/yolov4-416/saved_model.pb
+checkpoints/yolov4-416/variables/variables.data-00000-of-00001
+checkpoints/yolov4-416/variables/variables.index
+checkpoints/yolov4-tiny-416/saved_model.pb
+checkpoints/yolov4-tiny-416/variables/variables.data-00000-of-00001
+checkpoints/yolov4-tiny-416/variables/variables.index
+data/weights/yolov4-tiny.weights
+data/weights/yolov4.weights
