@@ -23,6 +23,7 @@ from deep_sort import preprocessing, nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
+from VideoCapture import VideoCapture
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
 flags.DEFINE_string('weights', './checkpoints/yolov4-416',
                     'path to weights file')
@@ -75,18 +76,18 @@ def main(_argv):
 
     # begin video capture
     try:
-        vid = cv2.VideoCapture(int(video_path))
+        vid = VideoCapture (int(video_path))
     except:
-        vid = cv2.VideoCapture(video_path)
+        vid = VideoCapture (video_path)
 
-    out = None
+    out = None  
 
     # get video ready to save locally if flag is set
     if FLAGS.output:
         # by default VideoCapture returns float instead of int
-        width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = int(vid.get(cv2.CAP_PROP_FPS))
+        width = vid.width
+        height = vid.height
+        fps = vid.fps
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 

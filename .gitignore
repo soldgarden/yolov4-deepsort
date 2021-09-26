@@ -8,3 +8,5 @@ checkpoints/yolov4-tiny-416/variables/variables.data-00000-of-00001
 checkpoints/yolov4-tiny-416/variables/variables.index
 data/weights/yolov4-tiny.weights
 data/weights/yolov4.weights
+outputs/carsTiny.avi
+outputs/fountain2.avi
