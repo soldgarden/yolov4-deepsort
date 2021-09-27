@@ -24,6 +24,7 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
 from VideoCapture import VideoCapture
+from UdpClient import UdpClient
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
 flags.DEFINE_string('weights', './checkpoints/yolov4-416',
                     'path to weights file')
@@ -38,6 +39,7 @@ flags.DEFINE_float('score', 0.50, 'score threshold')
 flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 flags.DEFINE_boolean('info', False, 'show detailed info of tracked objects')
 flags.DEFINE_boolean('count', False, 'count objects being tracked on screen')
+flags.DEFINE_boolean('OutUDP', False, 'send data using UDP')
 
 def main(_argv):
     # Definition of the parameters
@@ -90,7 +92,8 @@ def main(_argv):
         fps = vid.fps
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
-
+    if FLAGS.OutUDP:
+        udpClient = UdpClient()
     frame_num = 0
     # while video is running
     while True:
@@ -178,6 +181,7 @@ def main(_argv):
         if FLAGS.count:
             cv2.putText(frame, "Objects being tracked: {}".format(count), (5, 35), cv2.FONT_HERSHEY_COMPLEX_SMALL, 2, (0, 255, 0), 2)
             print("Objects being tracked: {}".format(count))
+        
         # delete detections that are not in allowed_classes
         bboxes = np.delete(bboxes, deleted_indx, axis=0)
         scores = np.delete(scores, deleted_indx, axis=0)
@@ -202,6 +206,7 @@ def main(_argv):
         tracker.update(detections)
 
         # update tracks
+        array=bytearray(0) 
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
@@ -218,7 +223,14 @@ def main(_argv):
         # if enable info flag then print details about each track
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
-
+            if FLAGS.OutUDP:
+                array.extend(int(track.track_id).to_bytes(2, byteorder='big'))
+                array.extend(max(0, int(bbox[0])).to_bytes(2, byteorder='big'))
+                array.extend(int(bbox[1]).to_bytes(2, byteorder='big'))
+                array.extend(int(bbox[2]).to_bytes(2, byteorder='big'))
+                array.extend(int(bbox[3]).to_bytes(2, byteorder='big'))
+        if FLAGS.OutUDP:
+            udpClient.SendUdpData("127.0.0.1",6566,array)
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
         print("FPS: %.2f" % fps)
@@ -237,5 +249,5 @@ def main(_argv):
 if __name__ == '__main__':
     try:
         app.run(main)
-    except SystemExit:
+    except SystemExit: 
         pass

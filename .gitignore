@@ -10,3 +10,5 @@ data/weights/yolov4-tiny.weights
 data/weights/yolov4.weights
 outputs/carsTiny.avi
 outputs/fountain2.avi
+outputs/cam32.avi
+outputs/demoTiny.avi
