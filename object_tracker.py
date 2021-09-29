@@ -1,4 +1,7 @@
 import os
+import struct
+
+from numpy.core.shape_base import block
 # comment out below line to enable tensorflow logging outputs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import time
@@ -25,6 +28,7 @@ from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
 from VideoCapture import VideoCapture
 from UdpClient import UdpClient
+from PositionConverter import PositionConverter
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
 flags.DEFINE_string('weights', './checkpoints/yolov4-416',
                     'path to weights file')
@@ -94,6 +98,7 @@ def main(_argv):
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
     if FLAGS.OutUDP:
         udpClient = UdpClient()
+        pConverter= PositionConverter(vid.width,vid.height)
     frame_num = 0
     # while video is running
     while True:
@@ -207,6 +212,9 @@ def main(_argv):
 
         # update tracks
         array=bytearray(0) 
+        plt.clf()
+        plt.xlim([-12, 15])
+        plt.ylim([0, 23])
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
@@ -224,13 +232,17 @@ def main(_argv):
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
             if FLAGS.OutUDP:
+                pos=pConverter.GetPostion((bbox[2]-bbox[0])/2+bbox[0],bbox[1])
                 array.extend(int(track.track_id).to_bytes(2, byteorder='big'))
-                array.extend(max(0, int(bbox[0])).to_bytes(2, byteorder='big'))
-                array.extend(int(bbox[1]).to_bytes(2, byteorder='big'))
-                array.extend(int(bbox[2]).to_bytes(2, byteorder='big'))
-                array.extend(int(bbox[3]).to_bytes(2, byteorder='big'))
+                array.extend(struct.pack('f',pos[0]) )
+                array.extend(struct.pack('f',pos[1]) )
+                plt.plot(pos[0],pos[1],'bo')
+                print(track.track_id,pos,)
         if FLAGS.OutUDP:
             udpClient.SendUdpData("127.0.0.1",6566,array)
+            #print(array)
+            plt.draw()
+            plt.pause(0.001)
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
         print("FPS: %.2f" % fps)
