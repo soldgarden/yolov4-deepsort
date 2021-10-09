@@ -112,6 +112,7 @@ def main(_argv):
         frame_num +=1
         print('Frame #: ', frame_num)
         frame_size = frame.shape[:2]
+        #print(frame_size)
         image_data = cv2.resize(frame, (input_size, input_size))
         image_data = image_data / 255.
         image_data = image_data[np.newaxis, ...].astype(np.float32)
@@ -212,9 +213,10 @@ def main(_argv):
 
         # update tracks
         array=bytearray(0) 
+        array.extend(bytes("Tracking","ascii"))
         plt.clf()
-        plt.xlim([-12, 15])
-        plt.ylim([0, 23])
+        plt.xlim([-1, 2])
+        plt.ylim([0, 3])
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
@@ -232,15 +234,20 @@ def main(_argv):
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
             if FLAGS.OutUDP:
-                pos=pConverter.GetPostion((bbox[2]-bbox[0])/2+bbox[0],bbox[1])
-                array.extend(int(track.track_id).to_bytes(2, byteorder='big'))
+                pos=pConverter.GetPostion((bbox[2]-bbox[0])/2+bbox[0],bbox[3])
+                
+                array.extend(int(track.track_id).to_bytes(2, byteorder='little'))
                 array.extend(struct.pack('f',pos[0]) )
                 array.extend(struct.pack('f',pos[1]) )
-                plt.plot(pos[0],pos[1],'bo')
+                array.extend(struct.pack('f',bbox[2]-bbox[0]) )
+                array.extend(struct.pack('f',bbox[3]-bbox[1]) )
+                plt.plot(pos[0],pos[1],color='green', marker='o',markersize=40)
                 print(track.track_id,pos,)
         if FLAGS.OutUDP:
-            udpClient.SendUdpData("127.0.0.1",6566,array)
+            udpClient.SendUdpData("127.0.0.1",5252,array)
             #print(array)
+            ax = plt.gca()
+            ax.grid(color='gray', linestyle='-.', linewidth=1)
             plt.draw()
             plt.pause(0.001)
         # calculate frames per second of running detections
