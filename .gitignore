@@ -17,3 +17,7 @@ outputs/cam13.avi
 outputs/camDetection1.avi
 outputs/camDetection2.avi
 outputs/dance.avi
+outputs/tiny.avi
+data/yolov4.weights
+data/yolov4-tiny.weights
+outputs/
